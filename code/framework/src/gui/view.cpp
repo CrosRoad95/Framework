@@ -82,6 +82,12 @@ namespace Framework::GUI {
             }
         });
 
+        // Assign _browser when CEF creates it asynchronously on its UI thread.
+        // All Update/Render/Input methods already guard on _browser being null.
+        _lifeSpanHandler->SetOnAfterCreatedCallback([this](CefRefPtr<CefBrowser> browser) {
+            _browser = browser;
+        });
+
         // Create CEF client
         _cefClient = new CEF::Client(_renderHandler, _lifeSpanHandler, _loadHandler, _displayHandler, _sdk.get());
 
@@ -94,9 +100,9 @@ namespace Framework::GUI {
         browserSettings.windowless_frame_rate = 60;
         browserSettings.background_color      = CefColorSetARGB(0, 0, 0, 0);
 
-        // Create the browser synchronously
-        _browser = CefBrowserHost::CreateBrowserSync(windowInfo, _cefClient, url, browserSettings, nullptr, nullptr);
-        if (!_browser) {
+        // CreateBrowser is safe to call from any thread when
+        // multi_threaded_message_loop=true; the browser is delivered via OnAfterCreated.
+        if (!CefBrowserHost::CreateBrowser(windowInfo, _cefClient, url, browserSettings, nullptr, nullptr)) {
             Framework::Logging::GetLogger("Web")->error("Failed to create CEF browser");
             return GUIError::GUI_VIEW_INIT_FAILED;
         }

@@ -10,9 +10,12 @@
 
 #include "include/cef_app.h"
 #include "include/cef_browser_process_handler.h"
+#include "include/cef_render_process_handler.h"
+
+#include "renderer_app.h"
 
 namespace Framework::GUI::CEF {
-    class App final: public CefApp, public CefBrowserProcessHandler {
+    class App final: public CefApp, public CefBrowserProcessHandler, public CefRenderProcessHandler {
       private:
         bool _contextInitialized = false;
 
@@ -21,8 +24,13 @@ namespace Framework::GUI::CEF {
             return this;
         }
 
+        CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override {
+            return this;
+        }
+
         void OnBeforeCommandLineProcessing(const CefString &processType, CefRefPtr<CefCommandLine> commandLine) override;
         void OnContextInitialized() override;
+        void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) override;
 
         bool IsContextInitialized() const {
             return _contextInitialized;

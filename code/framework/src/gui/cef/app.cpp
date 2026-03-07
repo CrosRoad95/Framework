@@ -10,6 +10,12 @@
 
 namespace Framework::GUI::CEF {
     void App::OnBeforeCommandLineProcessing(const CefString &processType, CefRefPtr<CefCommandLine> commandLine) {
+        // Run everything inside the host process as threads instead of spawning
+        // cef_subprocess.exe children. This is the correct model for DLL injection:
+        // there is no security boundary to preserve, and subprocess IPC is the source
+        // of the thread-affinity CHECK failures seen in Chromium 145.
+        commandLine->AppendSwitch("single-process");
+
         commandLine->AppendSwitch("disable-gpu-compositing");
         commandLine->AppendSwitch("disable-extensions");
         commandLine->AppendSwitch("disable-pdf-extension");
@@ -20,5 +26,15 @@ namespace Framework::GUI::CEF {
 
     void App::OnContextInitialized() {
         _contextInitialized = true;
+    }
+
+    void App::OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) {
+        // In --single-process mode the renderer runs inside the browser process,
+        // so App (not RendererApp) receives this callback. Register the same
+        // JS bindings that RendererApp::OnContextCreated registers in multi-process mode.
+        CefRefPtr<CefV8Value> global  = context->GetGlobal();
+        CefRefPtr<CefV8Handler> handler = new CallEventHandler(browser);
+        CefRefPtr<CefV8Value> func    = CefV8Value::CreateFunction("callEvent", handler);
+        global->SetValue("callEvent", func, V8_PROPERTY_ATTRIBUTE_NONE);
     }
 } // namespace Framework::GUI::CEF

@@ -48,7 +48,7 @@ namespace Framework::GUI {
         // Configure CEF settings
         CefSettings settings;
         settings.windowless_rendering_enabled = true;
-        settings.multi_threaded_message_loop  = false;
+        settings.multi_threaded_message_loop  = true;
         settings.no_sandbox                   = true;
         settings.log_severity                 = LOGSEVERITY_FATAL;
 
@@ -82,10 +82,12 @@ namespace Framework::GUI {
             return;
         }
 
-        std::scoped_lock lock(_renderMutex);
+        // Pump the CEF message loop outside the render lock so the render
+        // thread is not blocked for the full duration of task dispatch.
+        // NOTE: CefDoMessageLoopWork() must NOT be called when
+        // multi_threaded_message_loop=true; CEF owns its own UI thread.
 
-        // Pump the CEF message loop
-        CefDoMessageLoopWork();
+        std::scoped_lock lock(_renderMutex);
 
         // Update the views
         for (auto &view : _views) {

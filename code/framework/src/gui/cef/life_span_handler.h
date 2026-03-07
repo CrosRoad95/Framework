@@ -9,13 +9,19 @@
 #pragma once
 
 #include "include/cef_life_span_handler.h"
+#include <functional>
 
 namespace Framework::GUI::CEF {
     class LifeSpanHandler final: public CefLifeSpanHandler {
       private:
         CefRefPtr<CefBrowser> _browser;
+        std::function<void(CefRefPtr<CefBrowser>)> _onAfterCreated;
 
       public:
+        void SetOnAfterCreatedCallback(std::function<void(CefRefPtr<CefBrowser>)> cb) {
+            _onAfterCreated = std::move(cb);
+        }
+
         void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
         bool OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, int popupId, const CefString &targetUrl, const CefString &targetFrameName, CefLifeSpanHandler::WindowOpenDisposition targetDisposition, bool userGesture, const CefPopupFeatures &popupFeatures, CefWindowInfo &windowInfo, CefRefPtr<CefClient> &client, CefBrowserSettings &settings, CefRefPtr<CefDictionaryValue> &extraInfo, bool *noJavascriptAccess) override;
         void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;

@@ -96,6 +96,7 @@ list(APPEND FRAMEWORK_CLIENT_SRC
     src/gui/cef/life_span_handler.cpp
     src/gui/cef/load_handler.cpp
     src/gui/cef/display_handler.cpp
+    src/gui/cef/renderer_app.cpp
 )
 
 # Append the platform-dependent files to the related lists
