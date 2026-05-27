@@ -7,8 +7,28 @@
  */
 
 #include "app.h"
+#include "include/cef_parser.h"
 
 namespace Framework::GUI::CEF {
+
+    CefRefPtr<CefResourceHandler> App::Create(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString &scheme_name, CefRefPtr<CefRequest> request) {
+        if (!browser || !frame)
+            return nullptr;
+
+        CefURLParts urlParts;
+        if (!CefParseURL(request->GetURL(), urlParts))
+            return nullptr;
+
+        std::string scheme = CefString(&urlParts.scheme).ToString();
+        std::string domain = CefString(&urlParts.host).ToString();
+
+        auto it = _handlers.find({scheme, domain});
+        if (it == _handlers.end())
+            return nullptr;
+
+        return it->second(browser, frame, scheme_name, request);
+    }
+
     void App::OnBeforeCommandLineProcessing(const CefString &processType, CefRefPtr<CefCommandLine> commandLine) {
         // Run everything inside the host process as threads instead of spawning
         // cef_subprocess.exe children. This is the correct model for DLL injection:
@@ -36,5 +56,9 @@ namespace Framework::GUI::CEF {
         CefRefPtr<CefV8Handler> handler = new CallEventHandler(browser);
         CefRefPtr<CefV8Value> func    = CefV8Value::CreateFunction("callEvent", handler);
         global->SetValue("callEvent", func, V8_PROPERTY_ATTRIBUTE_NONE);
+    }
+
+    void App::RegisterSchemeHandlerFactory(const std::string &scheme, const std::string &domain, SchemaHandlerFactoryCallback callback) {
+        _handlers[{scheme, domain}] = callback;
     }
 } // namespace Framework::GUI::CEF

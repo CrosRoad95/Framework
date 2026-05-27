@@ -77,5 +77,7 @@ namespace Framework::GUI {
         View *GetView(int id) const {
             return _views[id].get();
         }
+
+        void RegisterSchemeHandlerFactory(const std::string &schema, const std::string &domain, Framework::GUI::CEF::SchemaHandlerFactoryCallback callback);
     };
 } // namespace Framework::GUI
