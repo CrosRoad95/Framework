@@ -7,6 +7,7 @@
  */
 
 #pragma once
+
 #include <utils/safe_win32.h>
 #include <utils/lifecycle.h>
 
@@ -33,6 +34,9 @@ namespace Framework::External::Discord {
         DiscordError SetPresence(const std::string &state, const std::string &details, discord::ActivityType activity) const;
 
         void SignInWithDiscord(const DiscordLoginProc &proc) const;
+
+        // Snowflake of the signed-in user once OnCurrentUserUpdate has fired, empty otherwise.
+        std::string GetUserId() const;
 
         discord::ActivityManager &GetActivityManager() const;
         discord::UserManager &GetUserManager() const;

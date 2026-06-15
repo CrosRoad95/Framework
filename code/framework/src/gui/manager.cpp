@@ -52,8 +52,15 @@ namespace Framework::GUI {
         settings.no_sandbox                   = true;
         settings.log_severity                 = LOGSEVERITY_FATAL;
 
-        CefString(&settings.cache_path) = rootDir + "/cache";
-        CefString(&settings.log_file)  = rootDir + "/logs/cef.log";
+        // CEF >=120 holds a process-singleton lock on root_cache_path. Two clients on the
+        // same machine sharing it would trigger the singleton relay (a stray blank browser
+        // window) and a startup crash in the second instance. Scope the cache per-process so
+        // dual-client debugging works. The path must be absolute; cache_path must equal or be
+        // a child of root_cache_path.
+        std::filesystem::path cacheRoot = std::filesystem::absolute(std::filesystem::path(rootDir) / "cache" / std::to_string(GetCurrentProcessId()));
+        CefString(&settings.root_cache_path) = cacheRoot.wstring();
+        CefString(&settings.cache_path)      = cacheRoot.wstring();
+        CefString(&settings.log_file)        = rootDir + "/logs/cef.log";
 
         // CEF requires an absolute path for the subprocess executable
         wchar_t exePath[MAX_PATH] = {};
@@ -147,7 +154,7 @@ namespace Framework::GUI {
         std::unique_ptr<View> view;
         switch (_graphicsRenderer->GetBackendType()) {
         case Graphics::RendererBackend::BACKEND_D3D_11:
-            view = std::make_unique<ViewD3D11>(_graphicsRenderer, this);
+            view = std::make_unique<ViewD3D11>(++_id, _graphicsRenderer, this);
             break;
         default:
             Framework::Logging::GetLogger("Web")->error("Failed to create view: Unsupported renderer backend");
@@ -165,9 +172,8 @@ namespace Framework::GUI {
 
         _views.push_back(std::move(view));
 
-        const auto viewId = _views.size() - 1;
-        Framework::Logging::GetLogger("Web")->debug("Created view with id {}", viewId);
-        return static_cast<int>(viewId);
+        Framework::Logging::GetLogger("Web")->debug("Created view with id {}", _id);
+        return _id;
     }
 
     bool Manager::DestroyView(int id) {
@@ -176,13 +182,23 @@ namespace Framework::GUI {
             return false;
         }
 
-        if (id < 0 || id >= static_cast<int>(_views.size())) {
+        int index = -1;
+        int i     = 0;
+
+        for (auto it = _views.begin(); it != _views.end(); ++it, ++i) {
+            if ((*it)->GetId() == id) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index == -1) {
             Framework::Logging::GetLogger("Web")->error("Failed to destroy view: View does not exist");
             return false;
         }
 
-        _views[id].reset();
-        _views.erase(_views.begin() + id);
+        _views[index].reset();
+        _views.erase(_views.begin() + index);
 
         Framework::Logging::GetLogger("Web")->debug("Destroyed view with id {}", id);
         return true;
@@ -234,7 +250,16 @@ namespace Framework::GUI {
         }
         return views;
     }
-    
+
+    View *Manager::GetView(int id) const {
+        for (auto it = _views.begin(); it != _views.end(); ++it) {
+            if ((*it)->GetId() == id) {
+                return it->get();
+            }
+        }
+        return nullptr;
+    }
+
     void Manager::RegisterSchemeHandlerFactory(const std::string &schema, const std::string &domain, Framework::GUI::CEF::SchemaHandlerFactoryCallback callback) {
         _cefApp->RegisterSchemeHandlerFactory(schema, domain, callback);
         CefRegisterSchemeHandlerFactory(schema, domain, _cefApp);

@@ -1,3 +1,11 @@
+/*
+ * MafiaHub OSS license
+ * Copyright (c) 2021-2024, MafiaHub. All rights reserved.
+ *
+ * This file comes from MafiaHub, hosted at https://github.com/MafiaHub/Framework.
+ * See LICENSE file in the source repository for information regarding licensing.
+ */
+
 #include "module.h"
 
 #include <logging/logger.h>
@@ -27,8 +35,7 @@ namespace Framework::Integrations::Client::Scripting {
         }
     } // anonymous namespace
 
-    ClientScriptingModule::ClientScriptingModule(std::shared_ptr<World::ClientEngine> world)
-        : _world(world) {
+    ClientScriptingModule::ClientScriptingModule() {
         // Create standalone V8 engine for client (no Node.js runtime)
         // moduleRootPath is set later in Init() or SetResourceCachePath()
         // when the actual resource cache path is known.
@@ -81,7 +88,7 @@ namespace Framework::Integrations::Client::Scripting {
         config.cascadeStopDependents = true;
         
         _resourceManager = std::make_unique<Framework::Scripting::ResourceManager>(
-            _engine.get(), _world->GetWorld(), config);
+            _engine.get(), config);
 
         // Register Framework SDK bindings for the new ResourceManager
         RegisterFrameworkBindings();

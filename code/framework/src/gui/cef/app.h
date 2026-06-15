@@ -8,11 +8,16 @@
 
 #pragma once
 
+#include "renderer_app.h"
+
 #include "include/cef_app.h"
 #include "include/cef_browser_process_handler.h"
 #include "include/cef_render_process_handler.h"
 
 #include "renderer_app.h"
+
+#include <function2.hpp>
+#include <unordered_map>
 
 #include <function2.hpp>
 #include <unordered_map>
@@ -55,6 +60,8 @@ namespace Framework::GUI::CEF {
 
         void OnBeforeCommandLineProcessing(const CefString &processType, CefRefPtr<CefCommandLine> commandLine) override;
         void OnContextInitialized() override;
+        void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) override;
+
         void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) override;
 
         bool IsContextInitialized() const {

@@ -23,6 +23,9 @@ namespace Framework::GUI::CEF {
         std::function<void(CefRefPtr<CefBrowser>)> _onAfterCreated;
         OnBeforeBrowseCallback _onBeforeBrowse;
 
+        std::function<void(CefRefPtr<CefBrowser>)> _onAfterCreated;
+        OnBeforeBrowseCallback _onBeforeBrowse;
+
       public:
         void SetOnAfterCreatedCallback(std::function<void(CefRefPtr<CefBrowser>)> cb) {
             _onAfterCreated = std::move(cb);

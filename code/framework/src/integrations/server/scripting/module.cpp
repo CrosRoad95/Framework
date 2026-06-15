@@ -1,8 +1,17 @@
+/*
+ * MafiaHub OSS license
+ * Copyright (c) 2021-2024, MafiaHub. All rights reserved.
+ *
+ * This file comes from MafiaHub, hosted at https://github.com/MafiaHub/Framework.
+ * See LICENSE file in the source repository for information regarding licensing.
+ */
+
 #include "module.h"
 
 #include <logging/logger.h>
 
 #include <scripting/builtins/builtins.h>
+#include <scripting/builtins/chat.h>
 #include <scripting/builtins/events.h>
 #include <scripting/builtins/messages.h>
 #include <scripting/builtins/console.h>
@@ -12,8 +21,7 @@
 
 namespace Framework::Integrations::Server::Scripting {
 
-    ServerScriptingModule::ServerScriptingModule(std::shared_ptr<World::ServerEngine> world)
-        : _world(world) {
+    ServerScriptingModule::ServerScriptingModule() {
         // Create Node.js engine without sandbox for full server capabilities
         Framework::Scripting::NodeEngineOptions options;
         options.sandboxed = false;
@@ -50,7 +58,7 @@ namespace Framework::Integrations::Server::Scripting {
         config.cascadeStopDependents = true;
 
         _resourceManager = std::make_unique<Framework::Scripting::ResourceManager>(
-            _nodeEngine.get(), _world->GetWorld(), config);
+            _nodeEngine.get(), config);
 
         // Register Framework SDK bindings
         RegisterFrameworkBindings();
@@ -128,6 +136,9 @@ namespace Framework::Integrations::Server::Scripting {
 
         // Register environment info
         Framework::Scripting::Environment::Register(isolate, context, coreObj, false);
+
+        // Register the chat API on the global object (Chat.sendToAll / Chat.sendToPlayer)
+        Framework::Scripting::Builtins::Chat::Register(isolate, global);
 
         Logging::GetLogger(FRAMEWORK_INNER_SCRIPTING)->debug("Registered Framework JS bindings");
     }

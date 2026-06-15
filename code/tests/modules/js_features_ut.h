@@ -228,10 +228,9 @@ MODULE(js_features, {
         NodeEngine engine({});
         EQUALS(engine.Init(), ScriptingError::SCRIPTING_NONE);
 
-        flecs::world world;
         ResourceManagerConfig config;
         config.resourcesPath = EventsTestHelper::GetTestPath();
-        ResourceManager manager(&engine, &world, config);
+        ResourceManager manager(&engine, config);
 
         {
             v8::Isolate *isolate = engine.GetIsolate();
@@ -269,59 +268,15 @@ MODULE(js_features, {
         EventsTestHelper::Cleanup();
     });
 
-    IT("Events.emit blocks reserved events from JS", {
-        EventsTestHelper::Setup();
-
-        NodeEngine engine({});
-        EQUALS(engine.Init(), ScriptingError::SCRIPTING_NONE);
-
-        flecs::world world;
-        ResourceManagerConfig config;
-        config.resourcesPath = EventsTestHelper::GetTestPath();
-        ResourceManager manager(&engine, &world, config);
-
-        {
-            v8::Isolate *isolate = engine.GetIsolate();
-            v8::Locker locker(isolate);
-            v8::Isolate::Scope isolateScope(isolate);
-            v8::HandleScope handleScope(isolate);
-            v8::Local<v8::Context> context = engine.GetContext();
-            v8::Context::Scope contextScope(context);
-
-            v8::Local<v8::Object> coreObj = v8::Object::New(isolate);
-            context->Global()->Set(context,
-                v8::String::NewFromUtf8Literal(isolate, "Core"),
-                coreObj).Check();
-            manager.GetEvents().Register(isolate, context, coreObj, &manager);
-            manager.SetCurrentResourceContext("testResource");
-        }
-
-        EQUALS(RunJSThrows(engine, "Core.Events.emit('resourceStart')"), true);
-        EQUALS(RunJSThrows(engine, "Core.Events.emit('resourceStop')"), true);
-        EQUALS(RunJSThrows(engine, "Core.Events.emit('playerConnect')"), true);
-        EQUALS(RunJSThrows(engine, "Core.Events.emit('customEvent')"), false);
-
-        {
-            v8::Isolate *isolate = engine.GetIsolate();
-            v8::Locker locker(isolate);
-            v8::Isolate::Scope isolateScope(isolate);
-            v8::HandleScope handleScope(isolate);
-            manager.GetEvents().CleanupResource("testResource");
-        }
-        engine.Shutdown();
-        EventsTestHelper::Cleanup();
-    });
-
     IT("Events.listenerCount returns correct count", {
         EventsTestHelper::Setup();
 
         NodeEngine engine({});
         EQUALS(engine.Init(), ScriptingError::SCRIPTING_NONE);
 
-        flecs::world world;
         ResourceManagerConfig config;
         config.resourcesPath = EventsTestHelper::GetTestPath();
-        ResourceManager manager(&engine, &world, config);
+        ResourceManager manager(&engine, config);
 
         {
             v8::Isolate *isolate = engine.GetIsolate();
@@ -362,10 +317,9 @@ MODULE(js_features, {
         NodeEngine engine({});
         EQUALS(engine.Init(), ScriptingError::SCRIPTING_NONE);
 
-        flecs::world world;
         ResourceManagerConfig config;
         config.resourcesPath = EventsTestHelper::GetTestPath();
-        ResourceManager manager(&engine, &world, config);
+        ResourceManager manager(&engine, config);
 
         {
             v8::Isolate *isolate = engine.GetIsolate();
@@ -406,10 +360,9 @@ MODULE(js_features, {
         NodeEngine engine({});
         EQUALS(engine.Init(), ScriptingError::SCRIPTING_NONE);
 
-        flecs::world world;
         ResourceManagerConfig config;
         config.resourcesPath = EventsTestHelper::GetTestPath();
-        ResourceManager manager(&engine, &world, config);
+        ResourceManager manager(&engine, config);
 
         {
             v8::Isolate *isolate = engine.GetIsolate();
@@ -439,10 +392,9 @@ MODULE(js_features, {
         NodeEngine engine({});
         EQUALS(engine.Init(), ScriptingError::SCRIPTING_NONE);
 
-        flecs::world world;
         ResourceManagerConfig config;
         config.resourcesPath = EventsTestHelper::GetTestPath();
-        ResourceManager manager(&engine, &world, config);
+        ResourceManager manager(&engine, config);
 
         {
             v8::Isolate *isolate = engine.GetIsolate();
@@ -486,10 +438,9 @@ MODULE(js_features, {
         NodeEngine engine({});
         EQUALS(engine.Init(), ScriptingError::SCRIPTING_NONE);
 
-        flecs::world world;
         ResourceManagerConfig config;
         config.resourcesPath = EventsTestHelper::GetTestPath();
-        ResourceManager manager(&engine, &world, config);
+        ResourceManager manager(&engine, config);
 
         {
             v8::Isolate *isolate = engine.GetIsolate();

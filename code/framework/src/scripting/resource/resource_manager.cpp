@@ -1,7 +1,14 @@
+/*
+ * MafiaHub OSS license
+ * Copyright (c) 2021-2024, MafiaHub. All rights reserved.
+ *
+ * This file comes from MafiaHub, hosted at https://github.com/MafiaHub/Framework.
+ * See LICENSE file in the source repository for information regarding licensing.
+ */
+
 #include "resource_manager.h"
 
 #include "../builtins/events.h"
-#include "world/engine.h"
 
 #include <algorithm>
 #include <cctype>
@@ -34,24 +41,18 @@ namespace Framework::Scripting {
         }
     } // anonymous namespace
 
-    ResourceManager::ResourceManager(Engine *jsEngine, flecs::world *world, const ResourceManagerConfig &config)
+    ResourceManager::ResourceManager(Engine *jsEngine, const ResourceManagerConfig &config)
         : _config(config)
-        , _world(world)
         , _jsEngine(jsEngine) {
         if (_jsEngine) {
             _jsEngine->SetResourceManager(this);
         }
-
-        _rootEntity = world->entity("Resources");
     }
 
     ResourceManager::~ResourceManager() {
         StopAll();
         if (_jsEngine) {
             _jsEngine->SetResourceManager(nullptr);
-        }
-        if (_rootEntity.is_valid()) {
-            _rootEntity.destruct();
         }
     }
 
@@ -95,7 +96,7 @@ namespace Framework::Scripting {
     }
 
     bool ResourceManager::DiscoverResource(const std::string &path) {
-        auto resource = std::make_unique<Resource>(path, _world);
+        auto resource = std::make_unique<Resource>(path);
 
         if (!resource->IsManifestValid()) {
             Logging::GetLogger(FRAMEWORK_INNER_SCRIPTING)->warn("Invalid package.json in {}: {}", path, resource->GetErrorMessage());
@@ -112,7 +113,6 @@ namespace Framework::Scripting {
                 return false;
             }
 
-            resource->GetRootEntity().child_of(_rootEntity);
             _resources[name] = std::move(resource);
         }
 
@@ -296,7 +296,7 @@ namespace Framework::Scripting {
             args.push_back(v8pp::to_v8(isolate, nameStr));
 
             SetCurrentResourceContext(nameStr);
-            _events.EmitReserved(isolate, context, "resourceStart", args, true);
+            _events.EmitReserved(isolate, context, "resourceStart", args);
             SetCurrentResourceContext("");
         }
 
@@ -714,6 +714,22 @@ namespace Framework::Scripting {
             }
         }
         return count;
+    }
+
+    void ResourceManager::OnEntityCreated(uint64_t networkId) {
+        // The stack fallback touches V8; CreateEntity also fires for avatars outside a JS context.
+        v8::Isolate *isolate = _jsEngine ? _jsEngine->GetIsolate() : nullptr;
+        Resource *resource = (isolate && isolate->InContext()) ? GetCurrentResourceWithStackFallback(isolate) : GetCurrentResource();
+        if (resource) {
+            resource->TrackEntity(networkId);
+        }
+    }
+
+    void ResourceManager::OnEntityDestroyed(uint64_t networkId) {
+        std::scoped_lock lock(_resourcesMutex);
+        for (auto &[name, resource] : _resources) {
+            resource->UntrackEntity(networkId);
+        }
     }
 
     void ResourceManager::HandleResourceRuntimeError(const std::string &resourceName, const std::string &error) {

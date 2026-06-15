@@ -1,3 +1,11 @@
+/*
+ * MafiaHub OSS license
+ * Copyright (c) 2021-2024, MafiaHub. All rights reserved.
+ *
+ * This file comes from MafiaHub, hosted at https://github.com/MafiaHub/Framework.
+ * See LICENSE file in the source repository for information regarding licensing.
+ */
+
 #pragma once
 
 #include <memory>
@@ -8,7 +16,6 @@
 #include <scripting/node_engine.h>
 #include <scripting/resource/resource_manager.h>
 #include <utils/lifecycle.h>
-#include <world/server.h>
 
 namespace Framework::Integrations::Server::Scripting {
 
@@ -28,7 +35,7 @@ namespace Framework::Integrations::Server::Scripting {
      */
     class ServerScriptingModule final : public Framework::Lifecycle, public Framework::Scripting::ScriptingModule {
       public:
-        explicit ServerScriptingModule(std::shared_ptr<World::ServerEngine> world);
+        ServerScriptingModule();
         ~ServerScriptingModule();
 
         /**
@@ -66,13 +73,6 @@ namespace Framework::Integrations::Server::Scripting {
         }
 
         /**
-         * Get the world engine.
-         */
-        std::shared_ptr<World::ServerEngine> GetWorldEngine() const {
-            return _world;
-        }
-
-        /**
          * Get the JavaScript resource manager.
          */
         Framework::Scripting::ResourceManager *GetResourceManager() const override {
@@ -107,7 +107,6 @@ namespace Framework::Integrations::Server::Scripting {
 
       private:
         std::unique_ptr<Framework::Scripting::NodeEngine> _nodeEngine;
-        std::shared_ptr<World::ServerEngine> _world;
         std::unique_ptr<Framework::Scripting::ResourceManager> _resourceManager;
 
         std::string _resourcesPath = "resources";
