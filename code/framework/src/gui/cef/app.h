@@ -62,8 +62,6 @@ namespace Framework::GUI::CEF {
         void OnContextInitialized() override;
         void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) override;
 
-        void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context) override;
-
         bool IsContextInitialized() const {
             return _contextInitialized;
         }
